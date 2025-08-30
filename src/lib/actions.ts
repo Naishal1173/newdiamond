@@ -1,3 +1,4 @@
+
 "use server";
 
 import { z } from "zod";
@@ -18,7 +19,9 @@ export async function calculatePrice(
   const validatedFields = CalculationSchema.safeParse(input);
 
   if (!validatedFields.success) {
-    return { success: false, error: "Invalid input." };
+    // Return a more detailed error message
+    const error = validatedFields.error.issues.map(i => i.message).join(', ');
+    return { success: false, error: error || "Invalid input." };
   }
 
   const { shape, color, clarity, weight, discount } = validatedFields.data;
@@ -30,7 +33,7 @@ export async function calculatePrice(
   }
 
   const basePrice = caratPrice * weight;
-  const discountMultiplier = 1 + (discount / 100);
+  const discountMultiplier = 1 - (discount / 100); // Corrected discount logic
   const discountedPricePerCarat = caratPrice * discountMultiplier;
   const finalAmount = weight * discountedPricePerCarat;
 
@@ -43,3 +46,5 @@ export async function calculatePrice(
 
   return { success: true, data: result };
 }
+
+    

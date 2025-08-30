@@ -14,8 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Loader2, Trash2 } from 'lucide-react';
 import {
   getAllDiamonds,
   getUniqueClarities,
@@ -23,7 +23,7 @@ import {
   getUniqueShapes,
 } from '@/lib/diamond-data';
 import { calculatePrice } from '@/lib/actions';
-import type { CalculationResult } from '@/lib/types';
+import type { CalculationResult, HistoryItem, CalculationInput } from '@/lib/types';
 import { useToast } from "@/hooks/use-toast";
 import {
     Form,
@@ -33,20 +33,21 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
+import { Separator } from '@/components/ui/separator';
 
 
 const formSchema = z.object({
-  shape: z.string({ required_error: "Please select a shape." }),
-  color: z.string({ required_error: "Please select a color." }),
-  clarity: z.string({ required_error: "Please select a clarity." }),
+  shape: z.string({ required_error: "Please select a shape." }).min(1, "Please select a shape."),
+  color: z.string({ required_error: "Please select a color." }).min(1, "Please select a color."),
+  clarity: z.string({ required_error: "Please select a clarity." }).min(1, "Please select a clarity."),
   weight: z.coerce.number().positive({ message: "Weight must be positive." }),
   discount: z.coerce.number().min(-100).max(100).default(0),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
-const formatCurrency = (amount: number | undefined) => {
-  if (amount === undefined) return '';
+const formatCurrency = (amount: number | undefined | null) => {
+  if (amount === undefined || amount === null) return '';
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -58,6 +59,7 @@ export default function Home() {
   const [colors, setColors] = useState<string[]>([]);
   const [clarities, setClarities] = useState<string[]>([]);
   const [result, setResult] = useState<CalculationResult | null>(null);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -65,6 +67,11 @@ export default function Home() {
     setShapes(getUniqueShapes());
     setColors(getUniqueColors());
     setClarities(getUniqueClarities());
+
+    const storedHistory = localStorage.getItem('diamond-calc-history');
+    if (storedHistory) {
+      setHistory(JSON.parse(storedHistory));
+    }
   }, []);
 
   const form = useForm<FormData>({
@@ -73,7 +80,7 @@ export default function Home() {
       shape: "",
       color: "",
       clarity: "",
-      weight: 0,
+      weight: undefined, // Set to undefined to avoid controlled/uncontrolled error
       discount: 0,
     },
   });
@@ -81,26 +88,52 @@ export default function Home() {
   const { watch, handleSubmit, control } = form;
   const watchedValues = watch();
 
-  useEffect(() => {
-    const subscription = watch(async (values) => {
-      const parsed = formSchema.safeParse(values);
-      if (parsed.success) {
-        const res = await calculatePrice(parsed.data);
-        if (res.success) {
-          setResult(res.data);
-        } else {
-          setResult(null);
-        }
+  const updatePrice = async (values: FormData) => {
+    const parsed = formSchema.safeParse(values);
+    if (parsed.success) {
+      const res = await calculatePrice(parsed.data);
+      if (res.success) {
+        setResult(res.data);
+      } else {
+        setResult(null);
       }
+    }
+  };
+
+  useEffect(() => {
+    const subscription = watch((values) => {
+      updatePrice(values as FormData);
     });
     return () => subscription.unsubscribe();
-  }, [watch, formSchema]);
+  }, [watch]);
+
+  const addToHistory = (input: CalculationInput, result: CalculationResult) => {
+    const newHistoryItem: HistoryItem = {
+      id: new Date().toISOString(),
+      input,
+      result,
+      timestamp: new Date().toLocaleString(),
+    };
+    const updatedHistory = [newHistoryItem, ...history].slice(0, 10); // Limit history
+    setHistory(updatedHistory);
+    localStorage.setItem('diamond-calc-history', JSON.stringify(updatedHistory));
+  };
+  
+  const clearHistory = () => {
+    setHistory([]);
+    localStorage.removeItem('diamond-calc-history');
+    toast({
+      title: "History Cleared",
+      description: "Your calculation history has been successfully cleared.",
+    });
+  };
 
   async function onSubmit(values: FormData) {
     setIsSubmitting(true);
     const res = await calculatePrice(values);
     if (res.success) {
       setResult(res.data);
+      addToHistory(values, res.data);
     } else {
       setResult(null);
       toast({
@@ -115,7 +148,7 @@ export default function Home() {
   const discountValue = watchedValues.discount || 0;
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4 sm:p-6 md:p-8">
+    <main className="flex min-h-screen flex-col items-center justify-start bg-background p-4 sm:p-6 md:p-8 space-y-8">
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader>
           <CardTitle className="text-center text-2xl font-bold">Diamond Price Calculator</CardTitle>
@@ -130,7 +163,7 @@ export default function Home() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Shape</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value} >
                         <FormControl>
                           <SelectTrigger><SelectValue placeholder="Shape" /></SelectTrigger>
                         </FormControl>
@@ -148,7 +181,7 @@ export default function Home() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Color</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                          <FormControl>
                           <SelectTrigger><SelectValue placeholder="Color" /></SelectTrigger>
                          </FormControl>
@@ -166,7 +199,7 @@ export default function Home() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Clarity</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger><SelectValue placeholder="Clarity" /></SelectTrigger>
                         </FormControl>
@@ -187,7 +220,7 @@ export default function Home() {
                   <FormItem>
                     <FormLabel>Weight (ct.)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="e.g., 1.2" {...field} />
+                      <Input type="number" step="0.01" placeholder="e.g., 1.2" {...field} value={field.value ?? ''}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -207,6 +240,7 @@ export default function Home() {
                             type="number"
                             placeholder="e.g., -15"
                             {...field}
+                            value={field.value ?? ''}
                             className={`pr-8 ${discountValue < 0 ? 'text-destructive' : ''}`}
                           />
                           <span className="absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">%</span>
@@ -239,13 +273,55 @@ export default function Home() {
                     Calculating...
                   </>
                 ) : (
-                  'Calculate'
+                  'Calculate & Add to History'
                 )}
               </Button>
             </form>
           </Form>
         </CardContent>
       </Card>
+
+      {history.length > 0 && (
+         <Card className="w-full max-w-4xl shadow-2xl">
+           <CardHeader className="flex flex-row items-center justify-between">
+             <CardTitle className="text-2xl font-bold">Calculation History</CardTitle>
+             <Button variant="ghost" size="icon" onClick={clearHistory}>
+                <Trash2 className="h-5 w-5 text-destructive"/>
+                <span className="sr-only">Clear History</span>
+             </Button>
+           </CardHeader>
+           <CardContent>
+             <div className="space-y-4">
+              {history.map((item, index) => (
+                <React.Fragment key={item.id}>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
+                      <div className="space-y-1">
+                          <p className="text-sm font-medium text-muted-foreground">Specs</p>
+                          <p className="font-semibold">{item.input.shape} {item.input.weight}ct {item.input.color} {item.input.clarity}</p>
+                      </div>
+                       <div className="space-y-1">
+                          <p className="text-sm font-medium text-muted-foreground">Discount</p>
+                          <p className={`font-semibold ${item.input.discount < 0 ? 'text-destructive' : ''}`}>{item.input.discount}%</p>
+                      </div>
+                      <div className="space-y-1">
+                          <p className="text-sm font-medium text-muted-foreground">Price/Carat</p>
+                          <p className="font-semibold">{formatCurrency(item.result.discountedPricePerCarat)}</p>
+                      </div>
+                      <div className="space-y-1 text-right">
+                          <p className="text-sm font-medium text-muted-foreground">Total Price</p>
+                          <p className="text-xl font-bold text-primary-foreground">{formatCurrency(item.result.finalAmount)}</p>
+                      </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{item.timestamp}</p>
+                  {index < history.length - 1 && <Separator />}
+                </React.Fragment>
+              ))}
+             </div>
+           </CardContent>
+         </Card>
+       )}
     </main>
   );
 }
+
+    
