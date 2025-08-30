@@ -8,25 +8,25 @@ body {
 
 @layer base {
   :root {
-    --background: 0 0% 96%; /* #F5F5F5 */
+    --background: 220 60% 97%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 210 40% 45%; /* A darker, richer blue for primary actions */
+    --primary: 210 40% 55%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 240 60% 97%; /* Lighter shade from accent #E6E6FA */
+    --secondary: 240 60% 97%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 240 60% 97%; /* #E6E6FA */
+    --muted: 240 60% 97%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 25% 78%; /* #B0C4DE */
+    --accent: 210 25% 78%;
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 210 40% 45%;
+    --ring: 210 40% 55%;
     --radius: 0.5rem;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
@@ -42,7 +42,7 @@ body {
     --card-foreground: 0 0% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 210 25% 78%; /* #B0C4DE becomes primary in dark mode */
+    --primary: 210 25% 78%;
     --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 0 0% 98%;
