@@ -1,7 +1,8 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from 'lucide-react';
 import {
   getAllDiamonds,
@@ -24,6 +25,15 @@ import {
 import { calculatePrice } from '@/lib/actions';
 import type { CalculationResult } from '@/lib/types';
 import { useToast } from "@/hooks/use-toast";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
+
 
 const formSchema = z.object({
   shape: z.string({ required_error: "Please select a shape." }),
@@ -60,11 +70,15 @@ export default function Home() {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      shape: "",
+      color: "",
+      clarity: "",
+      weight: 0,
       discount: 0,
     },
   });
 
-  const { watch, control, handleSubmit } = form;
+  const { watch, handleSubmit, control } = form;
   const watchedValues = watch();
 
   useEffect(() => {
@@ -103,129 +117,133 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4 sm:p-6 md:p-8">
       <Card className="w-full max-w-md shadow-2xl">
+        <CardHeader>
+          <CardTitle className="text-center text-2xl font-bold">Diamond Price Calculator</CardTitle>
+        </CardHeader>
         <CardContent className="p-6 sm:p-8">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Shape</label>
-                <Controller
-                  name="shape"
+          <Form {...form}>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-3 gap-4">
+                <FormField
                   control={control}
-                  render={({ field, fieldState }) => (
-                    <>
+                  name="shape"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Shape</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger><SelectValue placeholder="Shape" /></SelectTrigger>
+                        <FormControl>
+                          <SelectTrigger><SelectValue placeholder="Shape" /></SelectTrigger>
+                        </FormControl>
                         <SelectContent>
                           {shapes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                         </SelectContent>
                       </Select>
-                      {fieldState.error && <p className="text-xs text-destructive">{fieldState.error.message}</p>}
-                    </>
+                      <FormMessage />
+                    </FormItem>
                   )}
                 />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Color</label>
-                <Controller
+                <FormField
+                  control={control}
                   name="color"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger><SelectValue placeholder="Color" /></SelectTrigger>
-                      <SelectContent>
-                        {colors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    {fieldState.error && <p className="text-xs text-destructive">{fieldState.error.message}</p>}
-                    </>
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Color</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                         <FormControl>
+                          <SelectTrigger><SelectValue placeholder="Color" /></SelectTrigger>
+                         </FormControl>
+                        <SelectContent>
+                          {colors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
                   )}
                 />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Clarity</label>
-                 <Controller
+                <FormField
+                  control={control}
                   name="clarity"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger><SelectValue placeholder="Clarity" /></SelectTrigger>
-                      <SelectContent>
-                        {clarities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    {fieldState.error && <p className="text-xs text-destructive">{fieldState.error.message}</p>}
-                    </>
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Clarity</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger><SelectValue placeholder="Clarity" /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {clarities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
                   )}
                 />
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <label htmlFor="weight" className="text-sm font-medium">Weight</label>
-              <Controller
-                name="weight"
+              <FormField
                 control={control}
-                render={({ field, fieldState }) => (
-                  <>
-                  <Input id="weight" type="number" step="0.01" placeholder="e.g., 1.2" {...field} />
-                  {fieldState.error && <p className="text-xs text-destructive">{fieldState.error.message}</p>}
-                  </>
+                name="weight"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Weight (ct.)</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" placeholder="e.g., 1.2" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-               <div className="space-y-2">
-                <label htmlFor="discount" className="text-sm font-medium">Discount</label>
-                 <Controller
-                  name="discount"
+              <div className="grid grid-cols-2 gap-4">
+                 <FormField
                   control={control}
-                  render={({ field, fieldState }) => (
-                     <>
-                      <div className="relative">
-                        <Input
-                          id="discount"
-                          type="number"
-                          placeholder="e.g., -15"
-                          {...field}
-                          className={`pr-8 ${discountValue < 0 ? 'text-destructive' : ''}`}
-                        />
-                        <span className="absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">%</span>
-                      </div>
-                       {fieldState.error && <p className="text-xs text-destructive">{fieldState.error.message}</p>}
-                     </>
+                  name="discount"
+                  render={({ field }) => (
+                     <FormItem>
+                       <FormLabel>Discount</FormLabel>
+                       <FormControl>
+                         <div className="relative">
+                          <Input
+                            type="number"
+                            placeholder="e.g., -15"
+                            {...field}
+                            className={`pr-8 ${discountValue < 0 ? 'text-destructive' : ''}`}
+                          />
+                          <span className="absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">%</span>
+                         </div>
+                       </FormControl>
+                       <FormMessage />
+                     </FormItem>
                   )}
                 />
+                <div className="space-y-2">
+                  <FormLabel>Rap Price</FormLabel>
+                  <Input readOnly value={formatCurrency(result?.caratPrice)} className="bg-muted font-semibold" />
+                </div>
               </div>
+
               <div className="space-y-2">
-                <label className="text-sm font-medium">Rap Price</label>
-                <Input readOnly value={formatCurrency(result?.caratPrice)} className="bg-muted font-semibold" />
+                <FormLabel>Price Per Carat</FormLabel>
+                <Input readOnly value={formatCurrency(result?.discountedPricePerCarat)} className="bg-muted font-semibold"/>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Per Carat</label>
-              <Input readOnly value={formatCurrency(result?.discountedPricePerCarat)} className="bg-muted font-semibold"/>
-            </div>
-            
-            <div className="bg-primary text-primary-foreground rounded-md p-3 flex items-center justify-between">
-                <span className="font-bold text-lg">Total</span>
-                <span className="font-extrabold text-xl">{formatCurrency(result?.finalAmount)}</span>
-            </div>
+              <div className="bg-primary text-primary-foreground rounded-lg p-4 flex items-center justify-between">
+                  <span className="font-bold text-lg">Total Price</span>
+                  <span className="font-extrabold text-2xl">{formatCurrency(result?.finalAmount)}</span>
+              </div>
 
-            <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Calculating...
-                </>
-              ) : (
-                'Submit'
-              )}
-            </Button>
-          </form>
+              <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Calculating...
+                  </>
+                ) : (
+                  'Calculate'
+                )}
+              </Button>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     </main>
