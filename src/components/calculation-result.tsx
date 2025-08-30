@@ -32,19 +32,19 @@ export default function CalculationResultDisplay({ result, error }: CalculationR
     return null;
   }
 
-  const isSurcharge = result.finalAmount > result.basePrice;
+  const isDiscount = result.finalAmount < result.basePrice;
 
   return (
     <Card className="shadow-lg animate-in fade-in-50">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          {isSurcharge ? <TrendingUp className="h-6 w-6 text-destructive" /> : <TrendingDown className="h-6 w-6 text-green-600" />}
+          {isDiscount ? <TrendingDown className="h-6 w-6 text-green-600" /> : <TrendingUp className="h-6 w-6 text-destructive" />}
           <span>Calculation Result</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex justify-between items-baseline p-3 bg-secondary rounded-lg">
-          <p className="text-sm text-muted-foreground">Price / Carat</p>
+          <p className="text-sm text-muted-foreground">Price / Carat (RAP)</p>
           <p className="font-semibold text-lg">{formatCurrency(result.caratPrice)}</p>
         </div>
         <div className="flex justify-between items-baseline p-3 bg-secondary rounded-lg">

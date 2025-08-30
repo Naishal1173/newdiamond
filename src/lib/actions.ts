@@ -30,7 +30,7 @@ export async function calculatePrice(
   }
 
   const basePrice = caratPrice * weight;
-  const discountMultiplier = 1 - (discount / 100);
+  const discountMultiplier = 1 + (discount / 100);
   const discountedPricePerCarat = caratPrice * discountMultiplier;
   const finalAmount = weight * discountedPricePerCarat;
 
